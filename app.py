@@ -5,14 +5,18 @@ from pymongo import MongoClient
 import os
 
 app = Flask(__name__)
-CORS(app)
-
-app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Configuración de la conexión a MongoDB Atlas
 MONGO_URI = os.getenv("MONGO_URI","mongodb+srv://pepelopez7:w6AhUgzBS07j5Imc@plsmotors.ctzkm.mongodb.net/?retryWrites=true&w=majority&appName=PLSMotors")
 client = MongoClient(MONGO_URI)
 db = client['db_plsmotors']
+
+try:
+    client = MongoClient(MONGO_URI)
+    db = client['db_plsmotors']
+except Exception as e:
+    print(f"Error al conectar a la base de datos: {e}")
 
 # Colecciones
 vehiculos_collection = db['vehiculos']
