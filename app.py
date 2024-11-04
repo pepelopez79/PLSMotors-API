@@ -57,8 +57,9 @@ def agregar_vehiculo():
     if not nuevo_vehiculo:
         return jsonify({'error': 'Cuerpo de la solicitud vacío'}), 400
 
-    required_fields = ['matricula', 'marca', 'modelo', 'ano', 'kilometraje', 'precio', 'ciudad', 'provincia',
-                       'combustible', 'transmision', 'cv', 'imagenes']
+    required_fields = ['matricula', 'marca', 'modelo', 'ano', 'kilometraje',
+                       'precio', 'ciudad', 'provincia', 'combustible',
+                       'transmision', 'cv', 'imagenes']
 
     for field in required_fields:
         if field not in nuevo_vehiculo:
@@ -71,14 +72,16 @@ def agregar_vehiculo():
     try:
         # Inserta el nuevo vehículo en la colección
         vehiculos_collection.insert_one(nuevo_vehiculo)
+
         # Devuelve el nuevo vehículo sin el campo _id
         nuevo_vehiculo.pop('_id', None)  # Elimina _id si está presente
 
         mensaje = "Vehículo creado correctamente."
         return jsonify({'mensaje': mensaje, 'data': nuevo_vehiculo}), 201
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
+        print(f"Error al insertar el vehículo: {str(e)}")  # Log para el servidor
+        return jsonify({'error': 'Error interno del servidor. Inténtalo de nuevo más tarde.'}), 500
+    
 
 # Actualizar un vehículo
 @app.route('/vehiculos/<string:matricula>', methods=['PUT'])
