@@ -103,9 +103,9 @@ def obtener_vehiculos():
     # Consultar la colección con los filtros
     vehiculos = list(vehiculos_collection.find(filtros, {'_id': 0}))
 
-    # Verificar si la lista está vacía
+    # Si no se encuentran vehículos
     if not vehiculos:
-        return jsonify({'mensaje': 'No se encontraron vehículos con los filtros aplicados.', 'data': []}), 404
+        return jsonify({'mensaje': 'No se encontraron vehículos con los filtros aplicados.', 'data': []}), 200
 
     mensaje = "Se han obtenido los vehículos filtrados."
     return jsonify({'mensaje': mensaje, 'data': vehiculos}), 200
