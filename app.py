@@ -30,12 +30,84 @@ favoritos_collection = db['favoritos']
 # Obtener todos los vehículos
 @app.route('/vehiculos', methods=['GET'])
 def obtener_vehiculos():
-    vehiculos = list(vehiculos_collection.find({}, {'_id': 0}))
+    # Obtenemos los filtros de los parámetros de consulta
+    filtros = {}
 
-    if not vehiculos:  # Verifica si la lista está vacía
-        return jsonify({'mensaje': 'No se encontraron vehículos.', 'data': []}), 404
+    # Marca y modelo
+    marca = request.args.get('brand')
+    if marca and marca != "all":
+        filtros['marca'] = marca
 
-    mensaje = "Se han obtenido todos los vehículos."
+    modelo = request.args.get('model')
+    if modelo:
+        filtros['modelo'] = modelo
+
+    # Provincia y ciudad
+    provincia = request.args.get('province')
+    if provincia and provincia != "all":
+        filtros['provincia'] = provincia
+
+    ciudad = request.args.get('city')
+    if ciudad:
+        filtros['ciudad'] = ciudad
+
+    # Kilometraje
+    km_desde = request.args.get('mileage-from')
+    km_hasta = request.args.get('mileage-to')
+    if km_desde or km_hasta:
+        filtros['kilometraje'] = {}
+        if km_desde:
+            filtros['kilometraje']['$gte'] = int(km_desde)
+        if km_hasta:
+            filtros['kilometraje']['$lte'] = int(km_hasta)
+
+    # Año
+    ano_desde = request.args.get('year-from')
+    ano_hasta = request.args.get('year-to')
+    if ano_desde or ano_hasta:
+        filtros['ano'] = {}
+        if ano_desde:
+            filtros['ano']['$gte'] = int(ano_desde)
+        if ano_hasta:
+            filtros['ano']['$lte'] = int(ano_hasta)
+
+    # Caballos de potencia
+    cv_desde = request.args.get('horsepower-from')
+    cv_hasta = request.args.get('horsepower-to')
+    if cv_desde or cv_hasta:
+        filtros['cv'] = {}
+        if cv_desde:
+            filtros['cv']['$gte'] = int(cv_desde)
+        if cv_hasta:
+            filtros['cv']['$lte'] = int(cv_hasta)
+
+    # Precio
+    precio_desde = request.args.get('price-from')
+    precio_hasta = request.args.get('price-to')
+    if precio_desde or precio_hasta:
+        filtros['precio'] = {}
+        if precio_desde:
+            filtros['precio']['$gte'] = int(precio_desde)
+        if precio_hasta:
+            filtros['precio']['$lte'] = int(precio_hasta)
+
+    # Combustible y transmisión
+    combustible = request.args.get('fuel')
+    if combustible:
+        filtros['combustible'] = combustible
+
+    transmision = request.args.get('transmission')
+    if transmision:
+        filtros['transmision'] = transmision
+
+    # Consultar la colección con los filtros
+    vehiculos = list(vehiculos_collection.find(filtros, {'_id': 0}))
+
+    # Verificar si la lista está vacía
+    if not vehiculos:
+        return jsonify({'mensaje': 'No se encontraron vehículos con los filtros aplicados.', 'data': []}), 404
+
+    mensaje = "Se han obtenido los vehículos filtrados."
     return jsonify({'mensaje': mensaje, 'data': vehiculos}), 200
 
 
@@ -81,7 +153,7 @@ def agregar_vehiculo():
     except Exception as e:
         print(f"Error al insertar el vehículo: {str(e)}")  # Log para el servidor
         return jsonify({'error': 'Error interno del servidor. Inténtalo de nuevo más tarde.'}), 500
-    
+
 
 # Actualizar un vehículo
 @app.route('/vehiculos/<string:matricula>', methods=['PUT'])
