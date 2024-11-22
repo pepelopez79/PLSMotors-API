@@ -2,6 +2,7 @@ from bson import ObjectId
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from pymongo import MongoClient
+from werkzeug.utils import secure_filename
 import os
 
 app = Flask(__name__)
@@ -23,6 +24,43 @@ vehiculos_collection = db['vehiculos']
 publicaciones_collection = db['publicaciones']
 usuarios_collection = db['usuarios']
 favoritos_collection = db['favoritos']
+
+
+################################################################### Imágenes ###################################################################
+
+UPLOAD_FOLDER = os.path.join('static', 'imagenes')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Crear la carpeta si no existe
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+
+@app.route('/subir_imagen', methods=['POST'])
+def subir_imagen():
+    if 'imagen' not in request.files:
+        return jsonify({'error': 'No se encontró ningún archivo'}), 400
+
+    archivos = request.files.getlist('imagen')  # Soporte para múltiples imágenes
+    rutas_guardadas = []
+
+    for archivo in archivos:
+        if archivo.filename == '':
+            return jsonify({'error': 'El archivo no tiene nombre'}), 400
+
+        # Validar que sea un archivo permitido
+        if archivo and archivo.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+            # Asegurar el nombre del archivo
+            nombre_seguro = secure_filename(archivo.filename)
+            ruta_guardada = os.path.join(app.config['UPLOAD_FOLDER'], nombre_seguro)
+
+            # Guardar el archivo
+            archivo.save(ruta_guardada)
+            rutas_guardadas.append(ruta_guardada)
+        else:
+            return jsonify({'error': f'El archivo {archivo.filename} no es válido'}), 400
+
+    return jsonify({'mensaje': 'Imágenes subidas con éxito', 'rutas': rutas_guardadas}), 200
 
 
 ################################################################### Vehículos ###################################################################
