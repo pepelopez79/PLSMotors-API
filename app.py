@@ -36,6 +36,7 @@ if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 
+# Ruta para subir una imagen
 @app.route('/subir_imagen', methods=['POST'])
 def subir_imagen():
     if 'imagen' not in request.files:
@@ -61,6 +62,35 @@ def subir_imagen():
             return jsonify({'error': f'El archivo {archivo.filename} no es válido'}), 400
 
     return jsonify({'mensaje': 'Imágenes subidas con éxito', 'rutas': rutas_guardadas}), 200
+
+
+# Ruta para eliminar una imagen
+@app.route('/eliminar_imagenes', methods=['POST'])
+def eliminar_imagenes():
+    datos = request.get_json()
+
+    if not datos or 'imagenes' not in datos:
+        return jsonify({'error': 'No se proporcionaron imágenes para eliminar'}), 400
+
+    imagenes = datos['imagenes']
+    errores = []
+
+    for imagen in imagenes:
+        # Extraer solo el nombre del archivo eliminando la ruta completa
+        nombre_imagen = os.path.basename(imagen)
+        ruta_imagen = os.path.join(app.config['UPLOAD_FOLDER'], nombre_imagen)
+
+        if os.path.exists(ruta_imagen):
+            try:
+                os.remove(ruta_imagen)
+            except Exception as e:
+                errores.append({'imagen': nombre_imagen, 'error': str(e)})
+        else:
+            errores.append({'imagen': nombre_imagen, 'error': 'No encontrada'})
+
+    if errores:
+        return jsonify({'mensaje': 'Algunas imágenes no se pudieron eliminar', 'errores': errores}), 207
+    return jsonify({'mensaje': 'Todas las imágenes fueron eliminadas con éxito'}), 200
 
 
 ################################################################### Vehículos ###################################################################
