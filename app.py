@@ -424,9 +424,9 @@ def eliminar_usuario(dni):
 # Obtener todas las publicaciones
 @app.route('/publicaciones', methods=['GET'])
 def obtener_publicaciones():
-    publicaciones = list(publicaciones_collection.find({}))  # No excluimos _id aquí
+    publicaciones = list(publicaciones_collection.find({}))
 
-    if not publicaciones:  # Verifica si la lista está vacía
+    if not publicaciones:
         return jsonify({'mensaje': 'No se encontraron publicaciones.', 'data': []}), 404
 
     # Convertir _id a string en cada publicación
@@ -440,7 +440,6 @@ def obtener_publicaciones():
 # Obtener una publicación por ID
 @app.route('/publicaciones/<publicacion_id>', methods=['GET'])
 def obtener_publicacion(publicacion_id):
-    # Buscar la publicación en la colección por el _id
     publicacion = publicaciones_collection.find_one({'_id': ObjectId(publicacion_id)})
 
     if publicacion:
@@ -453,6 +452,7 @@ def obtener_publicacion(publicacion_id):
 
 # Agregar una nueva publicación
 @app.route('/publicaciones', methods=['POST'])
+@requiere_token
 def crear_publicacion():
     nueva_publicacion = request.json
 
@@ -487,6 +487,7 @@ def crear_publicacion():
 
 # Actualizar una publicación
 @app.route('/publicaciones/<publicacion_id>', methods=['PUT'])
+@requiere_token
 def actualizar_publicacion(publicacion_id):
     publicacion_actualizada = request.json
 
@@ -526,6 +527,7 @@ def actualizar_publicacion(publicacion_id):
 
 # Eliminar una publicación
 @app.route('/publicaciones/<publicacion_id>', methods=['DELETE'])
+@requiere_token
 def eliminar_publicacion(publicacion_id):
     result = publicaciones_collection.delete_one({'_id': ObjectId(publicacion_id)})
 
