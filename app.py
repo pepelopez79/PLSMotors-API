@@ -1,11 +1,13 @@
-import datetime
 from bson import ObjectId
-from flask import Flask, jsonify, request
+from flask import Flask
 from flask_cors import CORS
-import jwt
 from pymongo import MongoClient
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
+from functools import wraps
+from flask import request, jsonify
+import datetime
+import jwt
 import os
 
 app = Flask(__name__)
@@ -23,6 +25,31 @@ vehiculos_collection = db['vehiculos']
 publicaciones_collection = db['publicaciones']
 usuarios_collection = db['usuarios']
 favoritos_collection = db['favoritos']
+
+
+# TOKEN
+
+def requiere_token(func):
+    @wraps(func)
+    def verificacion_token(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Token no proporcionado o no es Bearer.'}), 401
+
+        token = auth_header.split(' ')[1]
+
+        try:
+            decoded_token = jwt.decode(token, 'abc123xyz456', algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'El token ha expirado.'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Token inválido.'}), 401
+
+        return func(*args, **kwargs)
+
+    return verificacion_token
+
 
 # IMÁGENES
 
@@ -518,6 +545,7 @@ def obtener_favoritos():
 
 
 # Obtener favoritos de un usuario por DNI
+@requiere_token
 @app.route('/favoritos/<string:dni_usuario>', methods=['GET'])
 def obtener_favoritos_por_usuario(dni_usuario):
     favoritos = list(favoritos_collection.find({'dni_usuario': dni_usuario}, {'_id': 0}))
@@ -531,6 +559,7 @@ def obtener_favoritos_por_usuario(dni_usuario):
 
 # Agregar un favorito
 @app.route('/favoritos', methods=['POST'])
+@requiere_token
 def agregar_favorito():
     nuevo_favorito = request.json
 
@@ -559,6 +588,7 @@ def agregar_favorito():
 
 # Eliminar un favorito por DNI y matrícula
 @app.route('/favoritos', methods=['DELETE'])
+@requiere_token
 def eliminar_favorito():
     datos_favorito = request.json
 
