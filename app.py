@@ -332,25 +332,16 @@ def iniciar_sesion():
     return jsonify({'error': 'El usuario o la contraseña introducida no son correctos'}), 401
 
 
-# Obtener todos los usuarios
-@app.route('/usuarios', methods=['GET'])
-def obtener_usuarios():
-    usuarios = list(usuarios_collection.find({}, {'_id': 0}))
-
-    if not usuarios:  # Verifica si la lista está vacía
-        return jsonify({'mensaje': 'No se encontraron usuarios.', 'data': []}), 404
-
-    mensaje = "Se han obtenido todos los usuarios."
-    return jsonify({'mensaje': mensaje, 'data': usuarios}), 200
-
-
-# Obtener un usuario por DNI
+# Obtener datos de contacto de un usuario por DNI
 @app.route('/usuarios/<string:dni>', methods=['GET'])
 def obtener_usuario(dni):
-    usuario = usuarios_collection.find_one({'dni': dni}, {'_id': 0})
+    # Devolver solo nombre, email y teléfono
+    usuario = usuarios_collection.find_one({'dni': dni}, {'_id': 0, 'nombre': 1, 'email': 1, 'telefono': 1})
+
     if usuario:
         mensaje = f"Usuario con DNI {dni} encontrado."
         return jsonify({'mensaje': mensaje, 'data': usuario}), 200
+
     return jsonify({'error': 'Usuario no encontrado'}), 404
 
 
@@ -387,6 +378,7 @@ def agregar_usuario():
 
 # Actualizar un usuario por DNI
 @app.route('/usuarios/<string:dni>', methods=['PUT'])
+@requiere_token
 def actualizar_usuario(dni):
     datos_actualizados = request.json
 
@@ -411,6 +403,7 @@ def actualizar_usuario(dni):
 
 # Eliminar un usuario por DNI
 @app.route('/usuarios/<string:dni>', methods=['DELETE'])
+@requiere_token
 def eliminar_usuario(dni):
     resultado = usuarios_collection.delete_one({'dni': dni})
     if resultado.deleted_count > 0:
