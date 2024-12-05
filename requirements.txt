@@ -11,3 +11,6 @@ flask_cors
 pip~=21.3.1
 wheel~=0.37.1
 pymongo~=4.10.1
+argparse~=1.4.0
+filelock~=3.16.1
+PyJWT~=2.10.1

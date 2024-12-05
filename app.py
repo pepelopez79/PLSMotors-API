@@ -1,7 +1,10 @@
+import datetime
 from bson import ObjectId
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import jwt
 from pymongo import MongoClient
+from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 import os
 
@@ -9,15 +12,12 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Configuración de la conexión a MongoDB Atlas
-MONGO_URI = os.getenv("MONGO_URI","mongodb+srv://pepelopez7:w6AhUgzBS07j5Imc@plsmotors.ctzkm.mongodb.net/?retryWrites=true&w=majority&appName=PLSMotors")
+MONGO_URI = os.getenv("MONGO_URI",
+                      "mongodb+srv://pepelopez7:w6AhUgzBS07j5Imc@plsmotors.ctzkm.mongodb.net/?retryWrites=true&w=majority&appName=PLSMotors")
 client = MongoClient(MONGO_URI)
 db = client['db_plsmotors']
 
-try:
-    client = MongoClient(MONGO_URI)
-    db = client['db_plsmotors']
-except Exception as e:
-    print(f"Error al conectar a la base de datos: {e}")
+app.config['SECRET_KEY'] = 'abc123xyz456'
 
 # Colecciones
 vehiculos_collection = db['vehiculos']
@@ -25,8 +25,7 @@ publicaciones_collection = db['publicaciones']
 usuarios_collection = db['usuarios']
 favoritos_collection = db['favoritos']
 
-
-################################################################### Imágenes ###################################################################
+# IMÁGENES
 
 UPLOAD_FOLDER = os.path.join('static', 'imagenes')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -93,7 +92,7 @@ def eliminar_imagenes():
     return jsonify({'mensaje': 'Todas las imágenes fueron eliminadas con éxito'}), 200
 
 
-################################################################### Vehículos ###################################################################
+# VEHÍCULOS
 
 # Obtener todos los vehículos
 @app.route('/vehiculos', methods=['GET'])
@@ -261,7 +260,46 @@ def eliminar_vehiculo(matricula):
     return jsonify({'error': 'Vehículo no encontrado'}), 404
 
 
-################################################################### Usuarios ###################################################################
+# USUARIOS
+
+@app.route('/login', methods=['POST'])
+def iniciar_sesion():
+    data = request.json
+    if not data or 'email' not in data or 'contrasena' not in data:
+        return jsonify({'error': 'Faltan datos'}), 400
+
+    email = data['email']
+    contrasena = data['contrasena']
+
+    # Buscar al usuario por email
+    usuario = usuarios_collection.find_one({'email': email})
+
+    if usuario:
+        print(f"Usuario encontrado: {usuario}")
+
+        # Verificar si la contraseña es correcta
+        if check_password_hash(usuario['contrasena'], contrasena):
+            print("Contraseña correcta")
+
+            # Generar JWT token que expira en 48 horas
+            token = jwt.encode({
+                'email': email,
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=48)
+            }, app.config['SECRET_KEY'], algorithm='HS256')
+
+            # Devolver el token y el DNI del usuario
+            return jsonify({
+                'mensaje': 'Inicio de sesión exitoso',
+                'token': token,
+                'dni': usuario['dni']
+            }), 200
+        else:
+            print("Contraseña incorrecta")
+    else:
+        print("Usuario no encontrado")
+
+    return jsonify({'error': 'El usuario o la contraseña introducida no son correctos'}), 401
+
 
 # Obtener todos los usuarios
 @app.route('/usuarios', methods=['GET'])
@@ -285,7 +323,6 @@ def obtener_usuario(dni):
     return jsonify({'error': 'Usuario no encontrado'}), 404
 
 
-# Agregar un nuevo usuario
 @app.route('/usuarios', methods=['POST'])
 def agregar_usuario():
     nuevo_usuario = request.json
@@ -300,9 +337,16 @@ def agregar_usuario():
     if usuarios_collection.find_one({'dni': nuevo_usuario['dni']}):
         return jsonify({'error': 'Ya existe un usuario con este DNI.'}), 409
 
+    # Verificar si la contraseña está en el cuerpo de la solicitud
+    if 'contrasena' not in nuevo_usuario:
+        return jsonify({'error': 'La contraseña es requerida'}), 400
+
+    # Hashear la contraseña antes de guardarla
+    nuevo_usuario['contrasena'] = generate_password_hash(nuevo_usuario['contrasena'])
+
     try:
         usuarios_collection.insert_one(nuevo_usuario)
-        nuevo_usuario.pop('_id', None)  # Elimina _id si está presente
+        nuevo_usuario.pop('_id', None)
 
         mensaje = "Usuario creado correctamente."
         return jsonify({'mensaje': mensaje, 'data': nuevo_usuario}), 201
@@ -344,7 +388,7 @@ def eliminar_usuario(dni):
     return jsonify({'error': 'Usuario no encontrado'}), 404
 
 
-################################################################### Publicaciones ###################################################################
+# PUBLICACIONES
 
 # Obtener todas las publicaciones
 @app.route('/publicaciones', methods=['GET'])
@@ -460,7 +504,7 @@ def eliminar_publicacion(publicacion_id):
     return jsonify({'error': 'Publicación no encontrada.'}), 404
 
 
-################################################################### Favoritos ###################################################################
+# FAVORITOS
 
 # Obtener todos los favoritos
 @app.route('/favoritos', methods=['GET'])
