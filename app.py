@@ -63,6 +63,7 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 # Ruta para subir una imagen
 @app.route('/subir_imagen', methods=['POST'])
+@requiere_token
 def subir_imagen():
     if 'imagen' not in request.files:
         return jsonify({'error': 'No se encontró ningún archivo'}), 400
@@ -91,6 +92,7 @@ def subir_imagen():
 
 # Ruta para eliminar una imagen
 @app.route('/eliminar_imagenes', methods=['POST'])
+@requiere_token
 def eliminar_imagenes():
     datos = request.get_json()
 
@@ -531,18 +533,6 @@ def eliminar_publicacion(publicacion_id):
 
 
 # FAVORITOS
-
-# Obtener todos los favoritos
-@app.route('/favoritos', methods=['GET'])
-def obtener_favoritos():
-    favoritos = list(favoritos_collection.find({}, {'_id': 0}))
-
-    if not favoritos:  # Verifica si la lista está vacía
-        return jsonify({'mensaje': 'No se encontraron favoritos.', 'data': []}), 404
-
-    mensaje = "Se han obtenido todos los favoritos."
-    return jsonify({'mensaje': mensaje, 'data': favoritos}), 200
-
 
 # Obtener favoritos de un usuario por DNI
 @requiere_token
