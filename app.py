@@ -376,6 +376,19 @@ def agregar_usuario():
         return jsonify({'error': str(e)}), 500
 
 
+# Ver perfil del usuario autenticado
+@app.route('/perfil/<string:dni>', methods=['GET'])
+@requiere_token
+def ver_perfil(dni):
+    usuario = usuarios_collection.find_one({'dni': dni}, {'_id': 0})
+
+    if usuario:
+        mensaje = "Perfil del usuario obtenido con éxito."
+        return jsonify({'mensaje': mensaje, 'data': usuario}), 200
+
+    return jsonify({'error': 'Usuario no encontrado'}), 404
+
+
 # Actualizar un usuario por DNI
 @app.route('/usuarios/<string:dni>', methods=['PUT'])
 @requiere_token
