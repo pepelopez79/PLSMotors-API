@@ -12,8 +12,7 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Configuración de la conexión a MongoDB Atlas
-MONGO_URI = os.getenv("MONGO_URI",
-                      "mongodb+srv://pepelopez7:w6AhUgzBS07j5Imc@plsmotors.ctzkm.mongodb.net/?retryWrites=true&w=majority&appName=PLSMotors")
+MONGO_URI = os.getenv("MONGO_URI","mongodb+srv://pepelopez7:w6AhUgzBS07j5Imc@plsmotors.ctzkm.mongodb.net/?retryWrites=true&w=majority&appName=PLSMotors")
 client = MongoClient(MONGO_URI)
 db = client['db_plsmotors']
 
