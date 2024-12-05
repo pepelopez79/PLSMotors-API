@@ -218,6 +218,7 @@ def obtener_vehiculo(matricula):
 
 # Agregar un vehículo
 @app.route('/vehiculos', methods=['POST'])
+@requiere_token
 def agregar_vehiculo():
     nuevo_vehiculo = request.json
 
@@ -252,6 +253,7 @@ def agregar_vehiculo():
 
 # Actualizar un vehículo
 @app.route('/vehiculos/<string:matricula>', methods=['PUT'])
+@requiere_token
 def actualizar_vehiculo(matricula):
     vehiculo_actualizado = request.json
 
@@ -280,6 +282,7 @@ def actualizar_vehiculo(matricula):
 
 # Eliminar un vehículo
 @app.route('/vehiculos/<string:matricula>', methods=['DELETE'])
+@requiere_token
 def eliminar_vehiculo(matricula):
     result = vehiculos_collection.delete_one({'matricula': matricula})
     if result.deleted_count:
