@@ -389,7 +389,6 @@ def ver_perfil(dni):
     return jsonify({'error': 'Usuario no encontrado'}), 404
 
 
-# Actualizar un usuario por DNI
 @app.route('/usuarios/<string:dni>', methods=['PUT'])
 @requiere_token
 def actualizar_usuario(dni):
@@ -400,6 +399,10 @@ def actualizar_usuario(dni):
         # Comprobar si el nuevo DNI ya existe en la colección
         if usuarios_collection.find_one({'dni': datos_actualizados['dni']}):
             return jsonify({'error': 'El DNI proporcionado ya está asociado a otro usuario.'}), 409
+
+    # Verificar si se incluye una nueva contraseña en los datos y hashearla antes de actualizarla
+    if 'contrasena' in datos_actualizados:
+        datos_actualizados['contrasena'] = generate_password_hash(datos_actualizados['contrasena'])
 
     # Realizar la actualización
     resultado = usuarios_collection.update_one({'dni': dni}, {'$set': datos_actualizados})
