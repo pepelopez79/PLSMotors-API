@@ -233,16 +233,46 @@ def agregar_vehiculo():
         if field not in nuevo_vehiculo:
             return jsonify({'error': f'Falta el campo: {field}'}), 400
 
-    # Verifica si ya existe un vehículo con la matrícula proporcionada
+    try:
+        ano = int(nuevo_vehiculo['ano'])
+        kilometraje = int(nuevo_vehiculo['kilometraje'])
+        cv = int(nuevo_vehiculo['cv'])
+        precio = float(nuevo_vehiculo['precio'])
+
+        if not (1980 <= ano <= 2024):
+            return jsonify({'error': 'El año debe estar entre 1980 y 2024'}), 400
+
+        if not (0 <= kilometraje <= 300000):
+            return jsonify({'error': 'El kilometraje debe estar entre 0 y 300,000'}), 400
+
+        if not (50 <= cv <= 500):
+            return jsonify({'error': 'Los caballos deben estar entre 50 y 500'}), 400
+
+        if not (0 <= precio <= 200000):
+            return jsonify({'error': 'El precio debe estar entre 0 y 200,000'}), 400
+
+        if nuevo_vehiculo['provincia'] == "":
+            return jsonify({'error': 'La provincia no puede estar vacía'}), 400
+
+        if nuevo_vehiculo['ciudad'] == "":
+            return jsonify({'error': 'La ciudad no puede estar vacía'}), 400
+
+        if nuevo_vehiculo['combustible'] not in ['Gasolina', 'Diésel', 'Eléctrico', 'Híbrido']:
+            return jsonify({'error': 'El tipo de combustible es inválido'}), 400
+
+        if nuevo_vehiculo['transmision'] not in ['Manual', 'Automático']:
+            return jsonify({'error': 'El tipo de transmisión es inválido'}), 400
+
+    except ValueError as e:
+        return jsonify({'error': f'Error en los valores numéricos: {str(e)}'}), 400
+
     if vehiculos_collection.find_one({'matricula': nuevo_vehiculo['matricula']}):
         return jsonify({'error': 'Ya existe un vehículo con esta matrícula'}), 409
 
     try:
-        # Inserta el nuevo vehículo en la colección
         vehiculos_collection.insert_one(nuevo_vehiculo)
 
-        # Devuelve el nuevo vehículo sin el campo _id
-        nuevo_vehiculo.pop('_id', None)  # Elimina _id si está presente
+        nuevo_vehiculo.pop('_id', None)
 
         mensaje = "Vehículo creado correctamente."
         return jsonify({'mensaje': mensaje, 'data': nuevo_vehiculo}), 201
